@@ -462,7 +462,8 @@ class OverrideResolver(Resolver):
 # to their SSLContext equivalents (the other arguments are still passed
 # to SSLContext.wrap_socket).
 _SSL_CONTEXT_KEYWORDS = frozenset(['ssl_version', 'certfile', 'keyfile',
-                                   'cert_reqs', 'ca_certs', 'ciphers'])
+                                   'cert_reqs', 'ca_certs', 'ciphers',
+                                   'do_handshake_on_connect', 'suppress_ragged_eofs'])
 
 
 def ssl_options_to_context(ssl_options):
@@ -508,6 +509,11 @@ def ssl_wrap_socket(socket, ssl_options, server_hostname=None, **kwargs):
     appropriate).
     """
     context = ssl_options_to_context(ssl_options)
+    if isinstance(ssl_options, dict):
+        if 'do_handshake_on_connect' not in kwargs:
+            kwargs['do_handshake_on_connect'] = ssl_options.get('do_handshake_on_connect', True)
+        if 'suppress_ragged_eofs' not in kwargs:
+            kwargs['suppress_ragged_eofs'] = ssl_options.get('suppress_ragged_eofs', True)
     if hasattr(ssl, 'SSLContext') and isinstance(context, ssl.SSLContext):
         if server_hostname is not None and getattr(ssl, 'HAS_SNI'):
             # Python doesn't have server-side SNI support so we can't
